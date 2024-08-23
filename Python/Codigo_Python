@@ -1,0 +1,159 @@
+#e projeto foi realizado utilizando o Google colaboratory, ferramenta gratuita do google para programar em python: https://colab.research.google.com/notebooks/welcome.ipynb
+#Estes são os imports das bibliotecas necessárias para o Funcionamento do projeto
+
+import pandas as pd
+import numpy as np
+import random
+import matplotlib.pyplot as plt
+import math
+
+#geração da seed fixa
+seed = 42
+random.seed(seed)
+np.random.seed(seed)
+
+# Atribuição das variaveis e geração da estrutura da base de dados
+Data_Inicial = '2023-01-01'
+Data_Final = '2023-12-31'
+Data_Sorteada = pd.date_range(start=Data_Inicial, end=Data_Final, freq='D')
+Quantidades_Registros = 44
+Produto = ['fogao','geladeira','televisao','sofa','guarda roupas','cama']
+Base_Dados = {
+    'ID': [],
+    'Data': [],
+    'Produto': [],
+    'Categoria': [],
+    'Quantidade': [],
+    'Preco': []
+}
+
+# Criando uma função utilizando ifs para definir a categoria, de acordo com o nome do produto.
+def Definir_categoria(Nome_produto):
+  if Nome_produto == 'sofa' or Nome_produto =='televisao':
+   Categoria = 'sala'
+
+  if Nome_produto == 'fogao' or Nome_produto == 'geladeira':
+   Categoria = 'cozinha'
+
+  if Nome_produto == 'cama' or Nome_produto == 'guarda roupas':
+   Categoria ='quarto'
+  return Categoria
+
+# Preenchendo a base de dados com informações necessárias, 44 dados são criados automatizado, os outros 6 são dados problemas, criados manualmente pelo usuário.
+for i in range(Quantidades_Registros):
+    Nome_Produto = random.choice(Produto)
+    Base_Dados['ID'].append(i + 1)
+    Base_Dados['Data'].append(random.choice(Data_Sorteada))
+    Base_Dados['Produto'].append(Nome_Produto)
+    Base_Dados['Categoria'].append(Definir_categoria(Nome_Produto))
+    Base_Dados['Quantidade'].append(random.randint(1, 20))
+    Base_Dados['Preco'].append(random.randint(1000, 5000))
+Base_Dados
+
+#inserção de dados problematicos na base de dados, incluindo valores nulos e duplicatas
+# dados problematicos por haverem valores nulos
+Base_Dados['ID'].append('45')
+Base_Dados['Data'].append(random.choice(Data_Sorteada))
+Base_Dados['Produto'].append('cama')
+Base_Dados['Categoria'].append(Definir_categoria('cama'))
+Base_Dados['Quantidade'].append(None)
+Base_Dados['Preco'].append(None)
+
+Base_Dados['ID'].append('46')
+Base_Dados['Data'].append(random.choice(Data_Sorteada))
+Base_Dados['Produto'].append('cama')
+Base_Dados['Categoria'].append(Definir_categoria('cama'))
+Base_Dados['Quantidade'].append(None)
+Base_Dados['Preco'].append(1005)
+
+Base_Dados['ID'].append('47')
+Base_Dados['Data'].append(random.choice(Data_Sorteada))
+Base_Dados['Produto'].append('fogao')
+Base_Dados['Categoria'].append(Definir_categoria('fogao'))
+Base_Dados['Quantidade'].append(None)
+Base_Dados['Preco'].append(3000)
+
+Base_Dados['ID'].append('48')
+Base_Dados['Data'].append(random.choice(Data_Sorteada))
+Base_Dados['Produto'].append(None)
+Base_Dados['Categoria'].append(None)
+Base_Dados['Quantidade'].append(None)
+Base_Dados['Preco'].append(2500)
+
+
+#dados duplicados
+
+Base_Dados['ID'].append('49')
+Base_Dados['Data'].append(random.choice(Data_Sorteada))
+Base_Dados['Produto'].append('sofa')
+Base_Dados['Categoria'].append('sala')
+Base_Dados['Quantidade'].append(5)
+Base_Dados['Preco'].append(1500)
+
+Base_Dados['ID'].append('49')
+Base_Dados['Data'].append(random.choice(Data_Sorteada))
+Base_Dados['Produto'].append('sofa')
+Base_Dados['Categoria'].append('sala')
+Base_Dados['Quantidade'].append(5)
+Base_Dados['Preco'].append(1500)
+
+Base_Dados
+
+# Atribuindo a base de dados a um DataFrame e visualizando os 10 primeiros elementos, além disso, utilizando set_option para limitar o numero de casas decimais dos dados
+pd.set_option('Display.precision',2)
+df = pd.DataFrame(Base_Dados)
+df.head(10)
+
+#realizando contagem de dados nulos presentes no dataframe
+df.isnull().sum()
+
+#Filtragem dos dados nulos, repondo os valores numericos com a média dos preços/quantidades e os valores caracteres com "desconhecido", também, removendo valores duplicatas através de id repetido.
+#Utilizando também o metodo ceil para poder arredondar valores quebrados para o valor inteiro mais proximo
+df['Quantidade'].fillna(df['Quantidade'].median(), inplace=True)
+df['Quantidade'] = np.ceil(df['Quantidade'])
+
+df['Preco'].fillna(df['Preco'].mean(), inplace=True)
+df['Preco'] = np.ceil(df['Preco'])
+
+df['Categoria'].fillna('categoria desconhecida', inplace = True )
+
+df['Produto'].fillna('produto desconhecido', inplace= True)
+
+df = df.drop_duplicates(subset='ID', keep='first')
+
+#verificação novamente se há valores nulos no dataframe
+df.isnull().sum()
+
+#Adicionando uma coluna a mais na df, calculado do valor total das vendas realizadas (quantidade x preco)
+#Criando um novo dataframe com os nomes dos produtos e preço total, afim de poder classifica-los em ordem decrescente
+df['Faturamento_mensal'] = df['Quantidade'] * df['Preco']
+Total_Faturamento_Por_Produto = df.groupby('Produto')['Faturamento_mensal'].sum().reset_index()
+Total_Faturamento_Por_Produto = Total_Faturamento_Por_Produto.sort_values(by='Faturamento_mensal', ascending=False, ignore_index=True)
+
+Total_Faturamento_Por_Produto
+
+# Identificando o produto com o maior valor total, a partir de seu id
+Total_Faturamento_Por_Produto.iloc[0]
+
+#Salvando o dataframe com as filtragens
+df.to_csv('data_clean.csv', index=False, sep=';')
+
+#Lendo o dataframe para confirmação do que foi salvo
+pd.read_csv('data_clean.csv',sep=';')
+
+# Junção das vendas mensais a partir dos mes que está em data
+# Criaçao nova tabela com a soma do faturamento, a partir dos meses
+# Atribuicao dos meses(janeiro a dezembro) a coluna mês  da tabela vendas_mensal
+df['Mes'] = df['Data'].dt.to_period('M')
+Vendas_Mensal = df.groupby('Mes')['Faturamento_mensal'].sum().reset_index()
+Vendas_Mensal['Mes'] = Vendas_Mensal['Mes'].dt.to_timestamp()
+
+# Criando grafico em linhas com numero de faturamento mensais
+
+Vendas_Mensal.plot(x='Mes', y='Faturamento_mensal',
+                   kind='line', figsize=(10, 6),
+                   title='Faturamento ao Longo do Ano',
+                   xlabel='Meses', ylabel='Total de Faturamento')
+
+#Visualização da tabela para comparar com o grafico criado
+Vendas_Mensal
