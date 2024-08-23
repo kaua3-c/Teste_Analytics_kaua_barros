@@ -1,0 +1,3 @@
+O projeto foi realizado através da ferramenta google colab, nele foi realizado a parte 1 da situação problema, onde foi resolvido em Python.
+deixarei o link do projeto onde testei e codifiquei em: https://colab.research.google.com/drive/1tb3mPpRbhExbt41QAPsuy7o9TITehW6W?usp=sharing As demais partes 
+parte dois e parte tres estarão nas pastas "SQL" e no arquivo "relatorios_insight.pdf"
